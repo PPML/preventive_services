@@ -7,7 +7,7 @@ The analytic datasets used in this manuscript are not publicly available but wer
 
 ## Workflow
 The analysis was conducted in the Redivis platform in collaboration with the Stanford Center for Population Health Sciences organization. In this repo, we provide
-- the [SQL code and process](https://github.com/PPML/preventive_services/blob/main/doc/readme.md) used to identify service recipients for 1 of the 10 preventive services studied
+- the [SQL code and process](https://github.com/PPML/preventive_services/blob/main/doc/readme.md) used to identify service recipients for one of the 10 preventive services studied
 - the SQL code and process to weight the MarketScan data at the national level using data from the American Community Survey
 - the [National Drug Codes for the 3 preventive medications](https://github.com/PPML/preventive_services/blob/main/medication_codes.xlsx)
   
