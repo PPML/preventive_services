@@ -1,22 +1,30 @@
-## SQL Code for Data Analysis
+## SQL code for data analysis
 
-This is the SQL code used to identify recipients of the 10 preventive services jeopardized by Kennedy v. Braidwood. The corresponding Redivis project can be viewed [here](https://redivis.com/workflows/h2b9-03vhykvre) once a Redivis account has been made.
+This is the SQL code used to identify recipients of breast cancer screenings. The Redivis project containing the code for all 10 preventive services studied can be viewed [here](https://redivis.com/workflows/h2b9-03vhykvre) once a Redivis account has been made.
 
-### Step 1: Screening Date Selection
-Select distinct beneficiary IDs and screening dates
+### Step 1: Breast cancer screenings and date of screen
+Select distinct enrollees and their screening dates from the inpatient and outpatient claims data files, using the CPT and HCPCS codes denoting preventive breast cancer screening (codes listed [here](https://github.com/PPML/preventive_services/blob/main/doc/breastcancer_codes.xlsx)).
 ```
-SELECT DISTINCT
-  BENE_ID,
-  CAST(LINE_SRVC_BGN_DT AS date FORMAT 'DDMONYYYY') AS screen_date
+SELECT 
+  ENROLID,
+  SVCDATE AS screen_date,
+  1 as bc,
+  AGE,
+  YEAR,
+  EGEOLOC,
+  COPAY,
+  COINS,
+  DEDUCT,
+  SEX
 FROM
-  _source_
+	_source_
 WHERE
-  BENE_ID IS NOT NULL AND 
+  ENROLID IS NOT NULL AND 
   (
     EXISTS (
-      SELECT 1
-      FROM UNNEST(@`bc_proc`) AS pattern
-      WHERE LINE_PRCDR_CD LIKE pattern 
+    SELECT 1
+    FROM UNNEST(@`bc_proc`) AS pattern
+    WHERE PROC1 LIKE pattern 
     )
   )
 ```
@@ -34,39 +42,26 @@ ORDER BY screen_date DESC
 ```
 
 ### Step 3: Exclusion Criteria
-Select beneficiaries meeting procedure-based exclusion criteria
-```
-SELECT DISTINCT
-  BENE_ID,
-  CAST(LINE_SRVC_BGN_DT AS date FORMAT 'DDMONYYYY') AS exclusion_date
-FROM
-  _source_
-WHERE
-  BENE_ID IS NOT NULL AND 
-  (
-    EXISTS (
-      SELECT 1
-      FROM UNNEST(@`bc_proc_excl`) AS pattern
-      WHERE LINE_PRCDR_CD LIKE pattern 
-    )
-  )
-```
 Select beneficiaries meeting diagnosis-based exclusion criteria
 ```
 SELECT DISTINCT 
-  BENE_ID,
-  CAST(SRVC_BGN_DT AS date FORMAT 'DDMONYYYY') AS exclusion_date
+  ENROLID,
+  SVCDATE AS exclusion_date,
+  1 as bc,
+  AGE,
 FROM _source_
 WHERE
-  BENE_ID IS NOT NULL AND 
-  (
+  ENROLID IS NOT NULL AND 
     EXISTS (
-      SELECT 1
-      FROM UNNEST(@`bc_diag_excl`) AS pattern
-      WHERE DGNS_CD_1 LIKE pattern OR DGNS_CD_2 LIKE pattern 
+    SELECT 1
+    FROM UNNEST(@`bc_diag_excl:mgm3`) AS pattern
+    WHERE DX1 LIKE pattern OR 
+          DX2 LIKE pattern OR
+          DX3 LIKE pattern OR 
+          DX4 LIKE pattern 
     )
-  )
-  ```
+```
+
 
 ### Step 4: Join Screening Data
 Join screening data with main source table
