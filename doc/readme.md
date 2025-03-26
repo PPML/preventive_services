@@ -2,7 +2,7 @@
 
 This is the SQL code used to identify recipients of breast cancer screenings. The Redivis project containing the code for all 10 preventive services studied can be viewed [here](https://redivis.com/workflows/h2b9-03vhykvre) once a Redivis account has been made.
 
-### Step 1: Breast cancer screenings and date of screen
+### Step 1: Breast cancer screening and date of screen
 Select distinct enrollees and their screening dates from the inpatient and outpatient claims data files, using the CPT and HCPCS codes denoting preventive breast cancer screening (codes listed [here](https://github.com/PPML/preventive_services/blob/main/doc/breastcancer_codes.xlsx)).
 ```
 SELECT 
@@ -28,21 +28,15 @@ WHERE
     )
   )
 ```
-### Step 2: Latest Screening Date per Beneficiary per Year
-Select the latest screening date for each beneficiary per year
 ```
-SELECT *
-FROM (
-  SELECT *,
-    ROW_NUMBER() OVER(PARTITION BY BENE_ID, EXTRACT(year FROM screen_date) ORDER BY screen_date DESC) rn
-  FROM _source_
-)
-WHERE rn = 1
-ORDER BY screen_date DESC
+SELECT *,
+  COINS + COPAY + DEDUCT AS OOP
+FROM _source_
+order by ENROLID, screen_date
 ```
 
-### Step 3: Exclusion Criteria
-Select beneficiaries meeting diagnosis-based exclusion criteria
+### Step 2: Breast cancer diagnosis and date of exclusionary diagnosis
+Select enrollees meeting diagnosis-based exclusion criteria (codes listed [here](https://github.com/PPML/preventive_services/blob/main/doc/breastcancer_codes.xlsx)) and keep their earliest instance of an exclusionary diagnosis.
 ```
 SELECT DISTINCT 
   ENROLID,
@@ -54,73 +48,68 @@ WHERE
   ENROLID IS NOT NULL AND 
     EXISTS (
     SELECT 1
-    FROM UNNEST(@`bc_diag_excl:mgm3`) AS pattern
+    FROM UNNEST(@`bc_excl`) AS pattern
     WHERE DX1 LIKE pattern OR 
           DX2 LIKE pattern OR
           DX3 LIKE pattern OR 
           DX4 LIKE pattern 
     )
+order by ENROLID, SVCDATE
 ```
-
-
-### Step 4: Join Screening Data
-Join screening data with main source table
-```
-SELECT
-  _source_.BENE_ID AS BENE_ID,
-  _source_.AGE AS age,
-  _source_.state AS state,
-  _source_.year AS year,
-  _source_.female AS female,
-  _source_.yob AS yob,
-  _source_.race AS race,
-  _source_.month_year AS month_year,
-  t1.screen_date AS screen_date
-FROM
-  _source_
-  LEFT JOIN `screened` AS t1 
-    ON _source_.BENE_ID = t1.BENE_ID
-    AND _source_.year = EXTRACT(year from t1.screen_date)
-```
-
-### Step 5: Apply Exclusions and Filters
-Apply exclusion criteria
-```
-SELECT *,
-  CASE 
-    WHEN EXISTS (
-        SELECT 1 FROM `excluded` AS t1
-        WHERE (_source_.BENE_ID = t1.BENE_ID
-            AND _source_.month_year >= t1.exclusion_date)
-        )
-    THEN 1
-    ELSE 0
-    END AS excluded
-FROM _source_
-```
-
--- Filter data based on exclusion, gender, and age criteria
 ```
 SELECT *
-FROM _source_
-WHERE excluded = 0 AND female = 1 AND age > 39 AND AGE < 66
-```
-
-### Step 6: Calculate Yearly Statistics
-Calculate denominator, numerator, and screening rate by state
-```
-SELECT 
-  state,
-  COUNT(DISTINCT BENE_ID) AS denominator,
-  SUM(screened) AS numerator,
 FROM (
   SELECT *,
-    ROW_NUMBER() OVER (PARTITION BY BENE_ID, year ORDER BY screened DESC) beneyr
+  ROW_NUMBER() OVER(PARTITION BY ENROLID) rn
   FROM _source_
 )
-WHERE beneyr = 1 AND age > 17
-GROUP BY state
-ORDER BY state
+WHERE rn = 1
+```
+
+### Step 3: Apply exlcusion and USPSTF criteria (specifically the population newly recommended for the service since 2010)
+Apply exclusion criteria and filter data based on gender and age guidelines
+```
+SELECT * 
+  FROM _source_ 
+  WHERE first_date >= '2011-01-01' 
+  AND (exclusion_date > screen_date OR exclusion_date IS NULL) 
+  AND AGE >= 40 AND AGE <= 49 AND SEX = 2
+```
+
+```
+SELECT ENROLID, 
+  YEAR,
+  MIN(AGE) AS AGE,
+  SUM(OOP) AS OOP,
+  MAX(EGEOLOC) AS state,
+  MIN(SEX) AS SEX,
+  "bc" as screen
+  FROM _source_
+GROUP BY ENROLID, YEAR
+ORDER BY ENROLID, YEAR
+```
+
+### Step 4: Calculate unweighted and weighted rates of screening use
+Join the demographic table containing each enrollee's weight (`MSCPSWT`) and calculate denominator, numerator, and screening rates for no-cost breast cancer screenings
+```
+SELECT DISTINCT
+  ENROLID
+  FROM _source_
+WHERE year > 2017 and OOP = 0
+```
+```
+SELECT
+    SUM(MSCPSWT) AS weighted,
+    COUNT(DISTINCT ENROLID) AS unweighted,
+    (COUNT(DISTINCT ENROLID) / t1_denom) * 100 AS unweighted_rate,
+    (SUM(MSCPSWT) / t1_weights) * 100 AS weighted_rate,
+    t1_weights as ACS_denom,
+    t1_denom as MS_counts,
+FROM
+	_source_
+GROUP BY
+  t1_weights,
+  t1_denom
 ```
 
 ### Citation
