@@ -93,8 +93,8 @@ FROM
 For each enrollee, divide the ACS strata count by the MarketScan strata count
 ```
 SELECT
-    ENROLID,
-    denom,
+    	ENROLID,
+   	denom,
 	sex,
 	age,
 	PERWT AS weights,
