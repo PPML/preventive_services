@@ -34,7 +34,7 @@ GROUP BY
 	state
 ```
 
-### Step 3: Join the ACS weights table and the sample counts table
+### Step 3: Join the original MarketScan data table with the ACS weights table and the sample counts table
 ```
 SELECT
 	_source_.ENROLID AS ENROLID,
@@ -59,3 +59,51 @@ FROM
 	AND _source_.AGE = t1.age
 	AND _source_.state = t1.state
 ```
+```
+SELECT
+	_source_.ENROLID AS ENROLID,
+	_source_.YEAR AS YEAR,
+	_source_.SEX AS SEX,
+	_source_.dep AS dep,
+	_source_.AGE AS AGE,
+	_source_.REGION AS REGION,
+	_source_.first_date AS first_date,
+	_source_.state AS state,
+	t1.year AS t1_year,
+	t1.age AS t1_age,
+	t1.acs_sex AS t1_acs_sex,
+	t1.state AS t1_state,
+	t1.PERWT AS t1_PERWT,
+	t1.strata AS t1_strata,
+	t2.YEAR AS t2_YEAR,
+	t2.AGE AS t2_AGE,
+	t2.SEX AS t2_SEX,
+	t2.state AS t2_state,
+	t2.denom AS t2_denom
+FROM
+	_source_
+	-- Step 2 (join):
+	INNER JOIN `sample_counts_by_year_age_sex_state_output` AS t2 ON _source_.YEAR = t2.YEAR
+	AND _source_.SEX = t2.SEX
+	AND _source_.AGE = t2.AGE
+	AND t1.state = t2.state
+```
+
+### Step 4: create the MarketScan Person Weight variable
+For each enrollee, divide the ACS strata count by the MarketScan strata count
+```
+SELECT
+    ENROLID,
+    denom,
+	sex,
+	age,
+	PERWT AS weights,
+	year,
+    state,
+	SAFE_DIVIDE(PERWT, denom) AS MSCPSWT
+FROM
+	_source_
+```
+
+
+
