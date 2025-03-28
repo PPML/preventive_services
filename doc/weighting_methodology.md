@@ -90,7 +90,7 @@ FROM
 ```
 
 ### Step 4: create the MarketScan Person Weight variable
-For each enrollee, divide the ACS strata count by the MarketScan strata count
+For each enrollee, divide the ACS strata count by the MarketScan strata count, and use this weight for all future operations (e.g., counting service recipients, calculating screening rates...).
 ```
 SELECT
     	ENROLID,
