@@ -17,6 +17,7 @@ order by year, age, state, acs_sex
 ```
 
 ### Step 2: create sample counts by year, age, state, and sex in the MarketScan data
+We are only interested in individuals with non-grandfathered-in plans, i.e., those whose insurance plan began after January 2011.
 ```
 SELECT
 	YEAR,
@@ -35,6 +36,7 @@ GROUP BY
 ```
 
 ### Step 3: Join the original MarketScan data table with the ACS weights table and the sample counts table
+The original MarketScan data table contains all individuals aged 15-64 whose insurance provider began after January 2011.
 ```
 SELECT
 	_source_.ENROLID AS ENROLID,
