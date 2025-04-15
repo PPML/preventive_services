@@ -1,6 +1,6 @@
 ## Weighting the MarketScan data at the national level
 
-To extrapolate from the study cohort to the population of enrollees with employer sponsored health insurance, we derived weights from the American Community Survey (ACS). Weights were computed as the ratio of counts of individuals in ACS in 2018, in strata defined by sex, age, and state, divided by corresponding strata counts within the 2018 cohort of beneficiaries in the MarketScan data.
+To extrapolate from the study cohort to the population of enrollees with employer sponsored health insurance, we derived weights from the American Community Survey (ACS). Weights were computed as the ratio of counts of individuals in ACS in 2018, in strata defined by sex, age, and state, divided by corresponding strata counts within the 2018 cohort of beneficiaries in the MarketScan data with non-grandfathered in plans.
 
 ### Step 1: group the ACS data by year, age, state, and sex and get ACS weights
 Ensure that individuals are covered through employer sponsored health insurance. Once the grouping is done, sum up person weights.
