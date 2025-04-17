@@ -1,6 +1,7 @@
 # Preventive Services
 
 Public repository for the manuscript "Use of no-cost preventive services jeopardized by Kennedy v. Braidwood"
+https://jamanetwork-com.stanford.idm.oclc.org/journals/jama-health-forum/fullarticle/2832980
 
 ## Data Sharing 
 The analytic datasets used in this manuscript are not publicly available but were accessed by the authors under a restricted data use agreement between Stanford University and Merative. Code for both the cohort assembly and analysis are centrally stored and archived on the Stanford University Center for Population Health Sciences data portal. Investigators wishing to replicate this work should complete requirements to obtain MarketScan data access and request view-access to the project from bronsm@stanford.edu, including code and workflow. 
